@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portofolio - Muhammad Tegar Jatinegoro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Vanilla Tilt JS untuk Efek 3D Card -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    <!-- Three.js untuk Latar Belakang Gelombang 3D Real-time -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030303; /* Dasar hitam murni */
+            color: #f8fafc;
+            overflow-x: hidden;
+            perspective: 1200px;
+        }
+
+        .font-mono-tech {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        /* Slices overlay di atas 3D background */
+        .bg-slices {
+            background-size: 60px 100%;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+        }
+
+        /* Kartu Kaca Transparan agar latar belakang 3D terlihat di belakangnya */
+        .glass-card {
+            background: rgba(8, 8, 8, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: 0 15px 50px -15px rgba(0, 0, 0, 0.9);
+            transform-style: preserve-3d;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(239, 68, 68, 0.25);
+            box-shadow: 0 20px 60px -10px rgba(239, 68, 68, 0.1);
+        }
+
+        /* Glitch/Sliced overlay untuk Foto Profil agar senada dengan visual reference */
+        .sliced-overlay {
+            background-image: repeating-linear-gradient(
+                to right,
+                transparent,
+                transparent 16px,
+                rgba(0, 0, 0, 0.85) 16px,
+                rgba(0, 0, 0, 0.85) 18px
+            );
+        }
+        
+        /* Utilitas Kedalaman 3D */
+        .preserve-3d { transform-style: preserve-3d; }
+        .translate-z-20 { transform: translateZ(20px); }
+        .translate-z-40 { transform: translateZ(40px); }
+        .translate-z-60 { transform: translateZ(60px); }
+
+        /* Custom Scrollbar - Minimalis Merah */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #030303; }
+        ::-webkit-scrollbar-thumb { background: #1f0202; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+
+        /* Animasi Scroll Reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px) translateZ(0);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+    </style>
+</head>
+<body class="antialiased selection:bg-red-600/30 selection:text-red-100">
+
+    <!-- CANVAS 3D BACKGROUND (Memenuhi Layar & Mengikuti Gerakan Kursor/Scroll) -->
+    <div id="3d-bg-container" class="fixed inset-0 w-full h-full z-0 pointer-events-none opacity-60"></div>
+
+    <!-- Pola Garis Vertikal Transparan di atas 3D -->
+    <div id="parallax-slices" class="fixed inset-[-5%] w-[110%] h-[110%] bg-slices z-10 pointer-events-none"></div>
+
+    <!-- Glow Orbs Latar Belakang -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-950/15 rounded-full mix-blend-screen filter blur-[150px] z-10 pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-rose-950/15 rounded-full mix-blend-screen filter blur-[150px] z-10 pointer-events-none"></div>
+
+    <!-- Navbar: Floating Capsule Design -->
+    <div class="fixed w-full top-6 z-50 px-4 sm:px-6 lg:px-8 pointer-events-none">
+        <nav id="navbar" class="max-w-3xl mx-auto rounded-full border border-white/[0.04] bg-black/40 backdrop-blur-md px-6 py-3.5 flex items-center justify-between pointer-events-auto transition-all duration-500 shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+            <div class="flex items-center gap-2">
+                <span class="font-extrabold text-xl tracking-wider text-red-600 cursor-pointer hover:scale-105 transition-transform" onclick="window.scrollTo(0,0)">
+                    TEGAR<span class="text-white">.</span>
+                </span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-1">
+                <a href="#tentang" class="text-slate-400 hover:text-red-500 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all duration-300">Tentang</a>
+                <a href="#pengalaman" class="text-slate-400 hover:text-red-500 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all duration-300">Pengalaman</a>
+                <a href="#pendidikan" class="text-slate-400 hover:text-red-500 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all duration-300">Pendidikan</a>
+                <a href="#kemampuan" class="text-slate-400 hover:text-red-500 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all duration-300">Keahlian</a>
+            </div>
+
+            <!-- Tombol Menu Mobile -->
+            <div class="md:hidden">
+                <button id="mobile-menu-btn" class="text-slate-400 hover:text-white focus:outline-none p-1.5 rounded-full hover:bg-white/5 transition-colors">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Menu Mobile (Slide Down) -->
+        <div id="mobile-menu" class="md:hidden max-w-3xl mx-auto mt-2 rounded-2xl glass-card border-red-900/30 shadow-2xl overflow-hidden transition-all duration-500 max-h-0 opacity-0 pointer-events-auto">
+            <div class="px-4 py-4 space-y-1.5">
+                <a href="#tentang" class="block hover:bg-red-600/10 hover:text-red-500 px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wider uppercase transition-colors">Tentang</a>
+                <a href="#pengalaman" class="block hover:bg-red-600/10 hover:text-red-500 px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wider uppercase transition-colors">Pengalaman</a>
+                <a href="#pendidikan" class="block hover:bg-red-600/10 hover:text-red-500 px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wider uppercase transition-colors">Pendidikan</a>
+                <a href="#kemampuan" class="block hover:bg-red-600/10 hover:text-red-500 px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wider uppercase transition-colors">Keahlian</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 space-y-20">
+
+        <!-- Section: Tentang & Profile Header -->
+        <section id="tentang" class="reveal">
+            <div class="glass-card p-6 sm:p-10 md:p-12 rounded-3xl border border-white/[0.04] shadow-2xl transition-all duration-500 preserve-3d"
+                 data-tilt data-tilt-max="2.5" data-tilt-speed="400" data-tilt-perspective="1200" data-tilt-glare="true" data-tilt-max-glare="0.05">
+                
+                <!-- Background Gradient Accent -->
+                <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-red-900/10 to-transparent pointer-events-none rounded-tr-3xl"></div>
+                
+                <!-- Profile Header Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center border-b border-white/[0.05] pb-8 mb-8 preserve-3d">
+                    
+                    <!-- Left Column: Circular Profile Photo Frame (Displaying user's actual uploaded photo) -->
+                    <div class="md:col-span-1 flex justify-center translate-z-40">
+                        <div class="relative w-44 h-44 sm:w-48 sm:h-44 flex items-center justify-center">
+                            
+                            <!-- Glowing Base Ring -->
+                            <div class="absolute inset-0 bg-red-600 rounded-full blur-2xl opacity-20"></div>
+
+                            <!-- Image Container with Grayscale-to-Color Transition -->
+                            <div class="relative w-40 h-40 rounded-full overflow-hidden border-2 border-red-600/80 bg-black shadow-[0_0_30px_rgba(220,38,38,0.25)] group/photo">
+                                <!-- Cyberpunk Grid lines overlay -->
+                                <div class="absolute inset-0 z-20 pointer-events-none sliced-overlay mix-blend-multiply opacity-80"></div>
+                                
+                                <!-- User's actual photo file with hover effect -->
+                                <img src="foto.jpg.jpeg" 
+                                     alt="Foto Profil Muhammad Tegar Jatinegoro" 
+                                     class="relative w-full h-full object-cover filter grayscale contrast-125 brightness-95 opacity-90 group-hover/photo:filter-none group-hover/photo:opacity-100 group-hover/photo:scale-105 transition-all duration-500 ease-out z-10">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Name & Contacts -->
+                    <div class="md:col-span-2 space-y-4 text-center md:text-left translate-z-40">
+                        <div>
+                            <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                                Muhammad Tegar <span class="text-red-600">Jatinegoro</span>
+                            </h1>
+                            <h2 class="text-sm sm:text-base font-mono-tech text-red-500/90 font-bold mt-1 tracking-wider uppercase">
+                                Junior Network Administrator
+                            </h2>
+                        </div>
+                        
+                        <!-- Contact Details Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-slate-400 font-mono-tech">
+                            <a href="mailto:250104008@mhs.udb.ac.id" class="flex items-center justify-center md:justify-start gap-2.5 hover:text-red-500 transition-colors">
+                                <i data-lucide="mail" class="w-4 h-4 text-red-600"></i>
+                                <span>250104008@mhs.udb.ac.id</span>
+                            </a>
+                            <a href="https://wa.me/628968118159" target="_blank" class="flex items-center justify-center md:justify-start gap-2.5 hover:text-red-500 transition-colors">
+                                <i data-lucide="phone" class="w-4 h-4 text-red-600"></i>
+                                <span>+62 896-8118-159</span>
+                            </a>
+                            <div class="flex items-center justify-center md:justify-start gap-2.5">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-red-600"></i>
+                                <span>Tipes, Surakarta</span>
+                            </div>
+                            <div class="flex items-center justify-center md:justify-start gap-2.5 text-emerald-500 font-bold">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                <span>OPEN TO WORK</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bio / Ringkasan Profil -->
+                <div class="space-y-4 translate-z-20 text-slate-300">
+                    <h3 class="text-sm font-mono-tech text-red-600 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i> Ringkasan Profil
+                    </h3>
+                    <p class="text-sm sm:text-base leading-relaxed">
+                        Saya Mahasiswa Semester 3 Program Studi <span class="text-white font-semibold border-b border-red-600/40 pb-0.5">Teknik Komputer</span> di Universitas Duta Bangsa. Selama perkuliahan, saya aktif dalam pembelajaran dan selalu bersemangat untuk mengembangkan keterampilan baru, khususnya di bidang infrastruktur IT.
+                    </p>
+                    <p class="text-sm sm:text-base leading-relaxed">
+                        Berbekal pemahaman dasar-dasar jaringan komputer, pemrograman, dan teknologi informasi, saya siap mengikuti program magang guna mempraktikkan ilmu secara langsung. Saya antusias untuk belajar, beradaptasi, dan berkontribusi secara profesional dalam lingkungan kerja yang nyata.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section: Pengalaman & Pendidikan (Timeline) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16">
+            
+            <!-- Pengalaman Column -->
+            <div id="pengalaman" class="reveal">
+                <h2 class="text-xs font-bold tracking-widest text-red-600 uppercase mb-2">Karier</h2>
+                <h3 class="text-2xl font-extrabold mb-8 flex items-center gap-3 text-white">
+                    <i data-lucide="briefcase" class="text-red-600 w-5 h-5"></i> Pengalaman
+                </h3>
+                
+                <!-- Fiber-Optic Timeline Link -->
+                <div class="relative border-l border-red-900/40 ml-4 md:ml-6 space-y-12 preserve-3d">
+                    <!-- Timeline Item -->
+                    <div class="relative pl-8 group preserve-3d">
+                        <!-- Glowing fiber dot -->
+                        <div class="absolute w-2.5 h-2.5 bg-red-600 rounded-full -left-[5.5px] top-2 border border-[#030303] group-hover:scale-125 group-hover:bg-red-500 group-hover:shadow-[0_0_12px_rgba(239,68,68,1)] transition-all duration-300 translate-z-40"></div>
+                        
+                        <div class="glass-card p-6 rounded-xl transition-transform duration-300 preserve-3d" 
+                             data-tilt data-tilt-max="4" data-tilt-speed="400" data-tilt-axis="y">
+                            <div class="translate-z-40">
+                                <span class="text-[10px] font-bold text-red-400 border border-red-900/30 bg-red-950/20 px-3 py-1 rounded-full mb-3 inline-block uppercase tracking-wider">Praktik Kerja Lapangan</span>
+                                <h4 class="text-lg font-bold text-white mt-1 leading-snug">Dinas Perhubungan (DISHUB) Surakarta</h4>
+                                <p class="text-slate-500 text-xs mb-4 font-mono-tech">Operational & Maintenance</p>
+                                
+                                <ul class="space-y-3 text-slate-400 text-xs">
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="minus" class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5"></i>
+                                        <span>Menyiapkan Surat Kerja (SK) operasional sistem.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="minus" class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5"></i>
+                                        <span>Membuat dan mengarsipkan Laporan teknis secara berkala.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="minus" class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5"></i>
+                                        <span>Terlibat di lapangan dalam memperbaiki Penerangan Jalan Umum (PJU).</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pendidikan Column -->
+            <div id="pendidikan" class="reveal delay-100">
+                <h2 class="text-xs font-bold tracking-widest text-red-800 uppercase mb-2">Akademik</h2>
+                <h3 class="text-2xl font-extrabold mb-8 flex items-center gap-3 text-white">
+                    <i data-lucide="graduation-cap" class="text-red-600 w-6 h-6"></i> Pendidikan
+                </h3>
+                
+                <div class="relative border-l border-red-900/40 ml-4 md:ml-6 space-y-8 preserve-3d">
+                    <!-- Universitas -->
+                    <div class="relative pl-8 group preserve-3d">
+                        <div class="absolute w-2.5 h-2.5 bg-red-600 rounded-full -left-[5.5px] top-2 border border-[#030303] group-hover:scale-125 group-hover:bg-red-500 group-hover:shadow-[0_0_12px_rgba(239,68,68,1)] transition-all duration-300 translate-z-40"></div>
+                        
+                        <div class="glass-card p-6 rounded-xl transition-transform duration-300 preserve-3d"
+                             data-tilt data-tilt-max="4" data-tilt-speed="400" data-tilt-axis="y">
+                            <div class="translate-z-40">
+                                <div class="flex justify-between items-start flex-wrap gap-2 mb-2">
+                                    <h4 class="text-lg font-bold text-white leading-snug">Universitas Duta Bangsa Surakarta</h4>
+                                    <span class="text-[10px] font-semibold text-slate-400 border border-white/[0.05] bg-[#0A0A0A]/50 px-2.5 py-1 rounded-full flex items-center gap-1 font-mono-tech">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> 2025 - Sekarang
+                                    </span>
+                                </div>
+                                <p class="text-red-500 font-semibold mb-2 text-xs uppercase tracking-wider">D3 Teknik Komputer</p>
+                                <p class="text-slate-400 text-xs leading-relaxed">Menempuh Semester 3 dengan fokus akademis pada rekayasa sistem komputer, administrasi jaringan dasar, serta manajemen infrastruktur IT.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SMK -->
+                    <div class="relative pl-8 group preserve-3d">
+                        <div class="absolute w-2.5 h-2.5 bg-slate-600 rounded-full -left-[5.5px] top-2 border border-[#030303] group-hover:bg-red-600 transition-colors duration-300 translate-z-40"></div>
+                        
+                        <div class="glass-card p-6 rounded-xl opacity-80 hover:opacity-100 transition-all duration-300 preserve-3d"
+                             data-tilt data-tilt-max="4" data-tilt-speed="400" data-tilt-axis="y">
+                            <div class="translate-z-40">
+                                <div class="flex justify-between items-start flex-wrap gap-2 mb-2">
+                                    <h4 class="text-base font-bold text-white leading-snug">SMK N 2 Surakarta</h4>
+                                    <span class="text-[10px] font-semibold text-slate-500 border border-white/[0.03] bg-[#0A0A0A]/50 px-2.5 py-1 rounded-full flex items-center gap-1 font-mono-tech">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> 2022 - 2025
+                                    </span>
+                                </div>
+                                <p class="text-slate-400 font-semibold text-xs uppercase tracking-wider">Jurusan Teknik Elektro</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Section: Kemampuan & Aktivitas -->
+        <section id="kemampuan" class="py-12 perspective-1000">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-xs font-bold tracking-widest text-red-600 uppercase mb-2">Kompetensi</h2>
+                <h3 class="text-3xl font-bold text-white">Keahlian & Aktivitas</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 preserve-3d">
+                
+                <!-- Kemampuan (Skills) -->
+                <div class="glass-card p-8 rounded-xl reveal preserve-3d" data-tilt data-tilt-max="2.5" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.06">
+                    <div class="translate-z-40">
+                        <div class="flex items-center gap-3 mb-8">
+                            <div class="p-3 border border-red-900/40 bg-red-950/20 rounded-lg shadow-[0_0_15px_rgba(153,27,27,0.2)]">
+                                <i data-lucide="cpu" class="w-5.5 h-5.5 text-red-500"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white">Soft & Hard Skills</h4>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2.5">
+                            <div class="flex items-center gap-2 px-3.5 py-2 border border-white/[0.04] bg-[#0A0A0A]/60 hover:border-red-600/50 hover:text-red-400 rounded-md text-xs font-medium text-slate-300 transition-all cursor-default">
+                                <i data-lucide="server" class="w-3.5 h-3.5 text-red-500/80"></i> Jaringan Komputer (Dasar)
+                            </div>
+                            <div class="flex items-center gap-2 px-3.5 py-2 border border-white/[0.04] bg-[#0A0A0A]/60 hover:border-red-600/50 hover:text-red-400 rounded-md text-xs font-medium text-slate-300 transition-all cursor-default">
+                                <i data-lucide="monitor" class="w-3.5 h-3.5 text-red-500/80"></i> Mengoperasikan Perangkat Lunak
+                            </div>
+                            <div class="flex items-center gap-2 px-3.5 py-2 border border-white/[0.04] bg-[#0A0A0A]/60 hover:border-red-600/50 hover:text-red-400 rounded-md text-xs font-medium text-slate-300 transition-all cursor-default">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-red-500/80"></i> Mudah Beradaptasi
+                            </div>
+                            <div class="flex items-center gap-2 px-3.5 py-2 border border-white/[0.04] bg-[#0A0A0A]/60 hover:border-red-600/50 hover:text-red-400 rounded-md text-xs font-medium text-slate-300 transition-all cursor-default">
+                                <i data-lucide="message-square" class="w-3.5 h-3.5 text-red-500/80"></i> Komunikasi yang Baik
+                            </div>
+                            <div class="flex items-center gap-2 px-3.5 py-2 border border-white/[0.04] bg-[#0A0A0A]/60 hover:border-red-600/50 hover:text-red-400 rounded-md text-xs font-medium text-slate-300 transition-all cursor-default">
+                                <i data-lucide="users" class="w-3.5 h-3.5 text-red-500/80"></i> Bisa Bekerja Sama Tim
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sertifikasi & Aktivitas -->
+                <div class="glass-card p-8 rounded-xl reveal delay-200 preserve-3d" data-tilt data-tilt-max="2.5" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.06">
+                    <div class="translate-z-40">
+                        <div class="flex items-center gap-3 mb-8">
+                            <div class="p-3 border border-red-900/40 bg-red-950/20 rounded-lg shadow-[0_0_15px_rgba(153,27,27,0.2)]">
+                                <i data-lucide="award" class="w-5.5 h-5.5 text-red-500"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white">Sertifikasi & Organisasi</h4>
+                        </div>
+                        
+                        <ul class="space-y-4">
+                            <li class="flex items-start gap-4 p-4 rounded-xl border border-white/[0.03] bg-[#0A0A0A]/40 hover:border-red-900/30 transition-all duration-300">
+                                <div class="mt-1 bg-white/[0.03] p-1.5 rounded-md border border-white/[0.05]">
+                                    <i data-lucide="building-2" class="w-4 h-4 text-red-600"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-slate-200 text-sm">Aktif Berorganisasi Kampus</h5>
+                                    <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Berpartisipasi aktif dalam struktur organisasi kampus Universitas Duta Bangsa guna melatih kepemimpinan serta kolaborasi eksternal.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-4 p-4 rounded-xl border border-white/[0.03] bg-[#0A0A0A]/40 hover:border-red-900/30 transition-all duration-300">
+                                <div class="mt-1 bg-white/[0.03] p-1.5 rounded-md border border-white/[0.05]">
+                                    <i data-lucide="video" class="w-4 h-4 text-red-600"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-slate-200 text-sm">Seminar Improvement Softskill</h5>
+                                    <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Mengikuti webinar intensif bertajuk pengembangan kepribadian dan asertivitas komunikasi untuk bekal profesional.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-20 border-t border-white/[0.03] bg-black pt-16 pb-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 items-center mb-12 text-center md:text-left">
+                
+                <!-- Brand -->
+                <div class="md:col-span-1">
+                    <span class="font-extrabold text-2xl tracking-wider text-red-600">TEGAR<span class="text-white">.</span></span>
+                    <p class="text-slate-500 mt-3 text-xs max-w-xs mx-auto md:mx-0 font-mono-tech">
+                        Revolutionize your network.
+                    </p>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="md:col-span-2 flex flex-col sm:flex-row justify-center md:justify-end gap-6 sm:gap-10">
+                    <a href="mailto:250104008@mhs.udb.ac.id" class="group flex flex-col items-center sm:items-start gap-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                        <div class="p-2.5 border border-white/[0.04] bg-white/[0.01] rounded-full group-hover:border-red-600 group-hover:bg-red-900/10 transition-all hover:scale-105">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-mono-tech">250104008@mhs.udb.ac.id</span>
+                    </a>
+                    
+                    <a href="https://wa.me/628968118159" target="_blank" class="group flex flex-col items-center sm:items-start gap-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                        <div class="p-2.5 border border-white/[0.04] bg-white/[0.01] rounded-full group-hover:border-red-600 group-hover:bg-red-900/10 transition-all hover:scale-105">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-mono-tech">+62 896-8118-159</span>
+                    </a>
+
+                    <div class="group flex flex-col items-center sm:items-start gap-1.5 text-slate-500">
+                        <div class="p-2.5 border border-white/[0.04] bg-white/[0.01] rounded-full">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-mono-tech">Tipes, Surakarta</span>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="border-t border-white/[0.03] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs text-slate-600 font-mono-tech">
+                    &copy; <span id="year"></span> MUHAMMAD TEGAR JATINEGORO.
+                </p>
+                <p class="text-xs text-slate-600 font-mono-tech flex items-center gap-1">
+                    POWERED BY TEGAR <span class="text-red-600">*</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Inisialisasi Ikon Lucide
+        lucide.createIcons();
+
+        // Mengatur tahun hak cipta dinamis di footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Logika Navigasi Menu Mobile
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                menu.classList.remove('max-h-0', 'opacity-0');
+                menu.classList.add('max-h-[400px]', 'opacity-100');
+                menu.classList.remove('pointer-events-none');
+            } else {
+                menu.classList.add('max-h-0', 'opacity-0');
+                menu.classList.remove('max-h-[400px]', 'opacity-100');
+                setTimeout(() => menu.classList.add('pointer-events-none'), 300);
+            }
+        }
+
+        btn.addEventListener('click', toggleMenu);
+
+        const mobileLinks = menu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if(isMenuOpen) toggleMenu();
+            });
+        });
+
+        // Efek shrink & glowing capsule navbar saat scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 40) {
+                navbar.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+                navbar.style.backgroundColor = 'rgba(5, 5, 5, 0.85)';
+                navbar.classList.add('shadow-[0_15px_40px_rgba(239,68,68,0.05)]');
+            } else {
+                navbar.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+                navbar.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+                navbar.classList.remove('shadow-[0_15px_40px_rgba(239,68,68,0.05)]');
+            }
+        });
+
+        // Animasi Scroll Reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Background Parallax 3D Effect based on Mouse Movement
+        document.addEventListener('mousemove', function(e) {
+            const x = (window.innerWidth - e.pageX * 2) / 100;
+            const y = (window.innerHeight - e.pageY * 2) / 100;
+            const bgSlices = document.getElementById('parallax-slices');
+            bgSlices.style.transform = `translateX(${x}px) translateY(${y}px)`;
+        });
+
+        // ==========================================
+        // THREE.JS GENERATIVE RED WAVE BACKGROUND ENGINE
+        // ==========================================
+        let waveGroup;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('3d-bg-container');
+            if (!container) return;
+
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+
+            // Setup Scene
+            const scene = new THREE.Scene();
+
+            // Setup Camera (Perspektif optimal untuk background)
+            const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 100);
+            camera.position.z = 21;
+
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // Group Penampung Wave
+            waveGroup = new THREE.Group();
+            scene.add(waveGroup);
+
+            // Warna Gelombang Cyberpunk
+            const redColor = 0xdc2626; // Red-600
+            const darkRedColor = 0x450a0a; // Deep crimson
+
+            // Membuat Struktur Ribs Simetris
+            const ribLines = [];
+            const ribCount = 38; 
+            const pointsPerRib = 12;
+            const xRange = 28; 
+            const zHalfRange = 4.2; 
+
+            for (let r = 0; r < ribCount; r++) {
+                // Buffer Wave Atas
+                const topGeo = new THREE.BufferGeometry();
+                const topPos = new Float32Array(pointsPerRib * 3);
+                topGeo.setAttribute('position', new THREE.BufferAttribute(topPos, 3));
+                
+                const topLine = new THREE.Line(topGeo, new THREE.LineBasicMaterial({
+                    color: redColor,
+                    transparent: true,
+                    opacity: 0.28
+                }));
+
+                // Buffer Wave Bawah (Mirrored)
+                const bottomGeo = new THREE.BufferGeometry();
+                const bottomPos = new Float32Array(pointsPerRib * 3);
+                bottomGeo.setAttribute('position', new THREE.BufferAttribute(bottomPos, 3));
+                
+                const bottomLine = new THREE.Line(bottomGeo, new THREE.LineBasicMaterial({
+                    color: redColor,
+                    transparent: true,
+                    opacity: 0.28
+                }));
+
+                waveGroup.add(topLine);
+                waveGroup.add(bottomLine);
+
+                ribLines.push({ topLine, bottomLine, rIndex: r });
+            }
+
+            // Garis Penghubung Longitudinal Horizontal
+            const connectorLines = [];
+            const connCount = 5; 
+            for (let c = 0; c < connCount; c++) {
+                const topConnGeo = new THREE.BufferGeometry();
+                const topConnPos = new Float32Array(ribCount * 3);
+                topConnGeo.setAttribute('position', new THREE.BufferAttribute(topConnPos, 3));
+                const topConnLine = new THREE.Line(topConnGeo, new THREE.LineBasicMaterial({
+                    color: darkRedColor,
+                    transparent: true,
+                    opacity: 0.12
+                }));
+
+                const btmConnGeo = new THREE.BufferGeometry();
+                const btmConnPos = new Float32Array(ribCount * 3);
+                btmConnGeo.setAttribute('position', new THREE.BufferAttribute(btmConnPos, 3));
+                const btmConnLine = new THREE.Line(btmConnGeo, new THREE.LineBasicMaterial({
+                    color: darkRedColor,
+                    transparent: true,
+                    opacity: 0.12
+                }));
+
+                waveGroup.add(topConnLine);
+                waveGroup.add(btmConnLine);
+
+                connectorLines.push({ topConnLine, btmConnLine, cIndex: c });
+            }
+
+            let clock = new THREE.Clock();
+
+            // Pelacakan kursor & scroll
+            let targetX = 0;
+            let targetY = 0;
+            let currentX = 0;
+            let currentY = 0;
+            let currentScrollY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                targetX = ((e.clientX / window.innerWidth) - 0.5) * 1.5;
+                targetY = ((e.clientY / window.innerHeight) - 0.5) * 1.5;
+            });
+
+            window.addEventListener('scroll', () => {
+                currentScrollY = window.scrollY;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const time = clock.getElapsedTime() * 1.1;
+
+                const topHorizontalTracks = Array.from({length: connCount}, () => []);
+                const btmHorizontalTracks = Array.from({length: connCount}, () => []);
+
+                // Update Posisi Gelombang
+                ribLines.forEach((ribObj) => {
+                    const { topLine, bottomLine, rIndex } = ribObj;
+                    
+                    const tPositions = topLine.geometry.attributes.position.array;
+                    const bPositions = bottomLine.geometry.attributes.position.array;
+
+                    const xPercent = rIndex / (ribCount - 1);
+                    const x = (xPercent - 0.5) * xRange;
+
+                    const waveHeight = Math.sin(xPercent * Math.PI * 2.5 + time) * 1.4;
+                    const accordionFrequency = 10; 
+
+                    for (let p = 0; p < pointsPerRib; p++) {
+                        const zPercent = p / (pointsPerRib - 1);
+                        const z = (zPercent - 0.5) * zHalfRange * 2;
+
+                        const foldEffect = Math.abs(Math.sin(zPercent * Math.PI * 2 * accordionFrequency)) * 0.45;
+
+                        // TOP WAVE (Y+)
+                        const topY = 2.4 + foldEffect + waveHeight + (Math.cos(zPercent * Math.PI) * 0.8);
+                        tPositions[p * 3] = x;
+                        tPositions[p * 3 + 1] = topY;
+                        tPositions[p * 3 + 2] = z;
+
+                        // BOTTOM WAVE (Y-)
+                        const btmY = -topY;
+                        bPositions[p * 3] = x;
+                        bPositions[p * 3 + 1] = btmY;
+                        bPositions[p * 3 + 2] = z;
+
+                        const mappingZ = Math.floor(zPercent * (connCount - 1));
+                        if (p === Math.round(zPercent * (pointsPerRib - 1)) && mappingZ < connCount) {
+                            topHorizontalTracks[mappingZ].push({ x, y: topY, z });
+                            btmHorizontalTracks[mappingZ].push({ x, y: btmY, z });
+                        }
+                    }
+
+                    topLine.geometry.attributes.position.needsUpdate = true;
+                    bottomLine.geometry.attributes.position.needsUpdate = true;
+                });
+
+                // Update Garis Longitudinal
+                connectorLines.forEach((connObj) => {
+                    const { topConnLine, btmConnLine, cIndex } = connObj;
+                    const topTrack = topHorizontalTracks[cIndex];
+                    const btmTrack = btmHorizontalTracks[cIndex];
+
+                    if(topTrack && topTrack.length >= ribCount) {
+                        const tPositions = topConnLine.geometry.attributes.position.array;
+                        for(let i=0; i<ribCount; i++) {
+                            tPositions[i*3] = topTrack[i].x;
+                            tPositions[i*3+1] = topTrack[i].y;
+                            tPositions[i*3+2] = topTrack[i].z;
+                        }
+                        topConnLine.geometry.attributes.position.needsUpdate = true;
+                    }
+
+                    if(btmTrack && btmTrack.length >= ribCount) {
+                        const bPositions = btmConnLine.geometry.attributes.position.array;
+                        for(let i=0; i<ribCount; i++) {
+                            bPositions[i*3] = btmTrack[i].x;
+                            bPositions[i*3+1] = btmTrack[i].y;
+                            bPositions[i*3+2] = btmTrack[i].z;
+                        }
+                        btmConnLine.geometry.attributes.position.needsUpdate = true;
+                    }
+                });
+
+                // Kamera Parallax
+                currentX = THREE.MathUtils.lerp(currentX, targetX, 0.04);
+                currentY = THREE.MathUtils.lerp(currentY, targetY, 0.04);
+                
+                camera.position.x = currentX * 3.5;
+                camera.position.y = -currentY * 3.5;
+
+                // Rotasi statis & interaksi scroll
+                const scrollFactor = currentScrollY * 0.0005;
+                waveGroup.rotation.y = time * 0.04 + (currentX * 0.12);
+                waveGroup.rotation.z = scrollFactor;
+                waveGroup.position.y = scrollFactor * 2.2;
+
+                camera.lookAt(scene.position);
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Handle Resize secara responsif
+            window.addEventListener('resize', () => {
+                width = window.innerWidth;
+                height = window.innerHeight;
+
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(width, height);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            });
+        });
+    </script>
+</body>
+</html>
